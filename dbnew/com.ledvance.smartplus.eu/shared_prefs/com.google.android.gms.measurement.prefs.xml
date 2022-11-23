@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <long name="last_upload" value="1662999499787" />
+    <long name="first_open_time" value="1659071781303" />
+    <string name="gmp_app_id">1:49021642174:android:9e46bdaa9786dd29</string>
+    <string name="app_instance_id">8c7227a6ad5daa1b08018fb3351bd5ac</string>
+    <boolean name="app_backgrounded" value="false" />
+    <long name="health_monitor:start" value="1662999476311" />
+    <boolean name="deferred_analytics_collection" value="false" />
+    <long name="last_delete_stale" value="33008" />
+    <string name="previous_os_version">10</string>
+    <boolean name="has_been_opened" value="true" />
+    <string name="health_monitor:value">2WC33025:Callable skipped the worker queue.</string>
+    <boolean name="allow_remote_dynamite" value="true" />
+    <long name="last_pause_time" value="1663001410087" />
+    <long name="midnight_offset" value="20231032" />
+    <boolean name="start_new_session" value="false" />
+    <long name="health_monitor:count" value="6" />
+    <long name="last_upload_attempt" value="0" />
+</map>
