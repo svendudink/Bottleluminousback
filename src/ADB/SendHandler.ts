@@ -94,6 +94,15 @@ const updatedDateAndTime = () => {
 //   l115: "115-M9921",
 // };
 
+const colorMap = {
+  red: -65536,
+  green: -16711936,
+  blue: -16711425,
+  orange: -55552,
+  yellow: -1024,
+  purple: -65281,
+};
+
 const l = {
   l6: "6-M1492",
   l12: "12-M1209",
@@ -191,8 +200,14 @@ export function createFile(
     tempArray.push(e.bulbId);
   });
 
+  const colorClosing = false;
+
   if (customLampArray.length >= 1) {
-    lampArray = ["1", ...tempArray, "1"];
+    if (colorClosing) {
+      lampArray = ["1", ...tempArray, "1"];
+    } else {
+      lampArray = tempArray;
+    }
   }
 
   const singleLightBuilder = (
@@ -230,10 +245,30 @@ export function createFile(
   };
 
   function getRandomColor() {
+    console.log("colorOption", colourOption);
     let colorString = "";
     if (colourOption === 0) {
     }
     if (colourOption === 1 && randomColourArray.length !== 0) {
+      //in process
+      if (bulbNo <= customLampArray.length - 1) {
+        console.log(bulbNo);
+        console.log("check", JSON.parse(customLampArray[bulbNo].colors));
+        const mapWithColorCodes = JSON.parse(
+          customLampArray[bulbNo].colors
+        ).map((e) => {
+          console.log(colorMap[e]);
+          return colorMap[e];
+        });
+        console.log("colortest", colorMap["red"]);
+        console.log(mapWithColorCodes);
+        if (mapWithColorCodes.length !== 0) {
+          randomColourArray = mapWithColorCodes;
+        }
+        //randomColourArray = JSON.parse(customLampArray[bulbNo].colors))
+      }
+      //end
+
       const min = Math.ceil(0);
       const max = Math.floor(randomColourArray.length);
       let cnumber = Math.floor(Math.random() * (max - min) + min);
@@ -310,7 +345,7 @@ export function createFile(
       function (err) {
         if (err) throw err;
         console.log("Saved!");
-        io.emit("serverStatus", `${dateAndTime}  file created`);
+        io.emit("serverStatus", `${updatedDateAndTime()}  file created`);
       }
     );
   }
@@ -325,7 +360,7 @@ let resetTime = 0;
 let scriptState = "free";
 let intervalID: any;
 
-const setDeviceStatus = (input) => {
+const setDeviceStatus = (input, length) => {
   if (input === "free") {
     resetTime = 0;
     clearInterval(intervalID);
@@ -337,7 +372,7 @@ const setDeviceStatus = (input) => {
 
   if (input === "busy") {
     scriptState = "busy";
-    resetTime = 300;
+    resetTime = length;
     clearInterval(intervalID);
     intervalID = setInterval(() => {
       console.log(resetTime, scriptState);
@@ -426,7 +461,7 @@ const betterSetTimeOut = (time: number) => {
 const directControl = async (event) => {
   if (event === "enable" && scriptState === "free") {
     if (currentPage === "colorWheel" && scriptState === "free") {
-      setDeviceStatus("busy");
+      setDeviceStatus("busy", 10);
 
       io.emit("serverStatus", `${updatedDateAndTime()}  turning on display`);
       io.emit(
@@ -435,9 +470,9 @@ const directControl = async (event) => {
       );
       await turnOnDisplay();
       playVideo(300);
-      scriptState = "free";
+      setDeviceStatus("free", "none");
     } else {
-      setDeviceStatus("busy");
+      setDeviceStatus("busy", 10);
       scriptState = "busy";
       currentPage = "colorWheel";
       io.emit("serverStatus", `${updatedDateAndTime()}  turning on display`);
@@ -483,7 +518,7 @@ const directControl = async (event) => {
         "serverStatus",
         `${updatedDateAndTime()}  Direct control mode started`
       );
-      setDeviceStatus("free");
+      setDeviceStatus("free", "none");
       playVideo(300);
     }
   } else {
@@ -534,8 +569,10 @@ const checkAndWait = async (
       io.emit("serverStatus", `${updatedDateAndTime()} ${message1}`);
     } else if (pixelColor[0] >= color2 - 2 && pixelColor[0] <= color2 + 2) {
       result = "timeout";
+      setDeviceStatus("busy", 10);
       io.emit("serverStatus", `${updatedDateAndTime()}  ${message2}`);
     } else if (pixelColor[0] >= color3 - 2 && pixelColor[0] <= color3 + 2) {
+      setDeviceStatus("busy", 10);
       io.emit("serverStatus", `${updatedDateAndTime()}  ${message3}`);
       sendTouchEvent(644, 126, 0);
     }
@@ -554,6 +591,7 @@ const checkAndWait = async (
       rebootcycles = 1;
       i = 0;
       console.log("reboot");
+      setDeviceStatus("busy", 70);
       io.emit(
         "serverStatus",
         `${updatedDateAndTime()} device cant connect, device will reboot, please wait 1 minute`
@@ -586,6 +624,7 @@ let lastDisplayTurnedOnTime = 0;
 
 const turnOnDisplay = () => {
   return new Promise((resolve, reject) => {
+    setDeviceStatus("busy", 4);
     if (Date.now() - lastDisplayTurnedOnTime < 598000) {
       console.log(Date.now() - lastDisplayTurnedOnTime);
       resolve("Display still on based on timestamp");
@@ -750,7 +789,7 @@ const checkIfConnected = async () => {
 
 export const RebootToDownload = async () => {
   if (scriptState === "free") {
-    setDeviceStatus("busy");
+    setDeviceStatus("busy", 300);
     currentPage = "mappedEvent";
     io.emit("turning on display");
     await turnOnDisplay();
@@ -794,7 +833,7 @@ export const RebootToDownload = async () => {
     await checkAndWait(300, 300, 158, "file loaded");
     await sendTouchEvent(300, 300, 0);
     io.emit("serverStatus", `${updatedDateAndTime()}  light event started`);
-    setDeviceStatus("free");
+    setDeviceStatus("free", "none");
   } else {
     io.emit("serverStatus", `${updatedDateAndTime()}  a script is running`);
   }

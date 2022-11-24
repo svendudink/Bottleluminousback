@@ -21,7 +21,8 @@ const MapLamps = function ({ SetMap }: any) {
       SetMap.request === "Hottest" ||
       SetMap.request === "brightness" ||
       SetMap.request === "resetServer" ||
-      SetMap.request === "close"
+      SetMap.request === "close" ||
+      SetMap.request === "addColor"
     ) {
       resolve(lampActions({ SetMap }));
     } else if (SetMap.request === "directEvent") {
@@ -29,7 +30,7 @@ const MapLamps = function ({ SetMap }: any) {
     } else if (SetMap.request === "newMap") {
       const result = dbThree
         .prepare(
-          `CREATE TABLE ${SetMap.mapName} (id text UNIQUE, lat text,lng text, bulbId text UNIQUE, key text UNIQUE, brightness text)`
+          `CREATE TABLE ${SetMap.mapName} (id text UNIQUE, lat text,lng text, bulbId text UNIQUE, key text UNIQUE, brightness text, colors text)`
         )
         .run();
       resolve({
@@ -59,14 +60,15 @@ const MapLamps = function ({ SetMap }: any) {
     } else if (SetMap.request === "addLamp") {
       const result = dbThree
         .prepare(
-          `INSERT INTO ${SetMap.mapName} (id ,lat, lng, key, brightness) VALUES (?,?,?,?,?)`
+          `INSERT INTO ${SetMap.mapName} (id ,lat, lng, key, brightness, colors) VALUES (?,?,?,?,?,?)`
         )
         .run(
           `${SetMap.bulbNumber}`,
           `${SetMap.lat}`,
           `${SetMap.lng}`,
           Math.random(),
-          `${SetMap.brightness}`
+          `${SetMap.brightness}`,
+          "[]"
         );
 
       resolve({
@@ -129,6 +131,7 @@ const ControlDevice = async function ({ SetValues }: any) {
             bulbArray.push({
               bulbId: l[element.bulbId],
               brightness: element.brightness,
+              colors: element.colors,
             });
           }
         });

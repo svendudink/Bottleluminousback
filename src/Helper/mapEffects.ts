@@ -2,6 +2,7 @@ import { db } from "..";
 import { availableBulbIdListFilter } from "../graphql/resolvers";
 import { l } from "../ADB/SendHandler";
 import { dbTwo, dbThree } from "../index";
+import { json } from "body-parser";
 
 export const lampActions = async ({ SetMap }: any) => {
   return new Promise((resolve, reject) => {
@@ -29,12 +30,12 @@ export const lampActions = async ({ SetMap }: any) => {
         dbThree.prepare(`DROP TABLE ${SetMap.mapName}`).run();
         dbThree
           .prepare(
-            `CREATE TABLE ${SetMap.mapName} (id text UNIQUE, lat text,lng text, bulbId text UNIQUE, key text UNIQUE)`
+            `CREATE TABLE ${SetMap.mapName} (id text UNIQUE, lat text,lng text, bulbId text UNIQUE, key text UNIQUE, brightness text, colors text )`
           )
           .run();
 
         const build = dbThree.prepare(
-          `INSERT INTO ${SetMap.mapName} (id ,lat, lng, bulbId, key) VALUES (@id , @lat, @lng, @bulbId, @key)`
+          `INSERT INTO ${SetMap.mapName} (id ,lat, lng, bulbId, key, brightness, colors) VALUES (@id , @lat, @lng, @bulbId, @key, @brightness, @colors)`
         );
         const insertMultiple = dbThree.transaction((lamps) => {
           for (const lamp of lamps) build.run(lamp);
@@ -73,14 +74,14 @@ export const lampActions = async ({ SetMap }: any) => {
         dbThree.prepare(`DROP TABLE ${SetMap.mapName}`).run();
         dbThree
           .prepare(
-            `CREATE TABLE ${SetMap.mapName} (id text UNIQUE, lat text,lng text, bulbId text UNIQUE, key text UNIQUE, brightness text)`
+            `CREATE TABLE ${SetMap.mapName} (id text UNIQUE, lat text,lng text, bulbId text UNIQUE, key text UNIQUE, brightness text, colors text)`
           )
           .run();
 
         console.log(result);
 
         const build = dbThree.prepare(
-          `INSERT INTO ${SetMap.mapName} (id ,lat, lng, bulbId, key, brightness) VALUES (@id , @lat, @lng, @bulbId, @key, @brightness)`
+          `INSERT INTO ${SetMap.mapName} (id ,lat, lng, bulbId, key, brightness, colors) VALUES (@id , @lat, @lng, @bulbId, @key, @brightness, @colors)`
         );
         const insertMultiple = dbThree.transaction((lamps) => {
           for (const lamp of lamps) build.run(lamp);
@@ -97,79 +98,6 @@ export const lampActions = async ({ SetMap }: any) => {
         });
       });
     };
-
-    //   await db.all(
-    //     `DELETE FROM ${SetMap.mapName} WHERE id = ${SetMap.bulbNumber}`
-    //   );
-
-    //   await db.all(
-    //     `SELECT * FROM ${SetMap.mapName} ORDER BY id + 0 ASC`,
-    //     (err, table) => {
-    //       table.map(async (element, index) => {
-    //         console.log(element);
-    //         await db.run(
-    //           `UPDATE ${SetMap.mapName} SET id = ? WHERE key = ?`,
-    //           [
-    //             `${
-    //               SetMap.bulbNumber > Number(element.id)
-    //                 ? Number(element.id)
-    //                 : Number(element.id) + 1000
-    //             }`,
-    //             `${element.key}`,
-    //           ],
-    //           (err, table) => {
-    //             console.log(err);
-    //           }
-    //         );
-    //       });
-    //     }
-    //   );
-    //   setTimeout(() => {
-    //     db.all(
-    //       `SELECT lng, lat, bulbId, id FROM ${SetMap.mapName}`,
-    //       (err, table) => {
-    //         table.map(async (element, index, oldArr) => {
-    //           let temp;
-    //           console.log(
-    //             "current element being worked on",
-    //             element.id,
-    //             element
-    //           );
-    //           if (Number(element.id) >= 1000) {
-    //             temp = JSON.parse(JSON.stringify(Number(element.id) - 1001));
-    //             console.log("whatis", temp);
-    //           } else {
-    //             temp = element.id;
-    //             console.log("validate");
-    //           }
-    //           console.log("what2", temp, element.id);
-
-    //           await db.run(
-    //             `UPDATE ${SetMap.mapName} SET id = ? WHERE id = ?`,
-    //             [`${temp}`, `${element.id}`],
-    //             (err, table) => {
-    //               console.log(err);
-    //             }
-    //           );
-    //         });
-    //       }
-    //     );
-    //   }, 900);
-    //   setTimeout(() => {
-    //     db.all(
-    //       `SELECT * FROM ${SetMap.mapName} ORDER BY id + 0 ASC`,
-    //       (err, table) => {
-    //         if (err) {
-    //           reject(err);
-    //         }
-    //         resolve({
-    //           bulbIdList: JSON.stringify(availableBulbIdListFilter(l, table)),
-    //           mapArray: JSON.stringify(table),
-    //           availableBulbIdList: availableBulbIdListFilter(l, table),
-    //         });
-    //       }
-    //     );
-    //   }, 1500);
 
     const addLampBeforeActive = async () => {
       return new Promise((resolve, reject) => {
@@ -198,12 +126,12 @@ export const lampActions = async ({ SetMap }: any) => {
         dbThree.prepare(`DROP TABLE ${SetMap.mapName}`).run();
         dbThree
           .prepare(
-            `CREATE TABLE ${SetMap.mapName} (id text UNIQUE, lat text,lng text, bulbId text UNIQUE, key text UNIQUE, brightness text)`
+            `CREATE TABLE ${SetMap.mapName} (id text UNIQUE, lat text,lng text, bulbId text UNIQUE, key text UNIQUE, brightness text, colors text)`
           )
           .run();
 
         const build = dbThree.prepare(
-          `INSERT INTO ${SetMap.mapName} (id ,lat, lng, bulbId, key, brightness) VALUES (@id , @lat, @lng, @bulbId, @key, @brightness)`
+          `INSERT INTO ${SetMap.mapName} (id ,lat, lng, bulbId, key, brightness, colors) VALUES (@id , @lat, @lng, @bulbId, @key, @brightness @colors)`
         );
         const insertMultiple = dbThree.transaction((lamps) => {
           for (const lamp of lamps) build.run(lamp);
@@ -219,7 +147,8 @@ export const lampActions = async ({ SetMap }: any) => {
             `${SetMap.lat}`,
             `${SetMap.lng}`,
             Math.random(),
-            `${"100"}`
+            `${"100"}`,
+            "[]"
           );
 
         const load = dbThree
@@ -231,95 +160,6 @@ export const lampActions = async ({ SetMap }: any) => {
           availableBulbIdList: availableBulbIdListFilter(l, load),
         });
       });
-      // // await db.all(
-      // //         `DELETE FROM ${SetMap.mapName} WHERE id = ${SetMap.bulbNumber}`
-      // //       );
-
-      // await db.all(
-      //   `SELECT * FROM ${SetMap.mapName} ORDER BY id + 0 ASC`,
-      //   (err, table) => {
-      //     table.map(async (element, index) => {
-      //       console.log(element);
-      //       await db.run(
-      //         `UPDATE ${SetMap.mapName} SET id = ? WHERE key = ?`,
-      //         [
-      //           `${
-      //             SetMap.bulbNumber > Number(element.id)
-      //               ? Number(element.id)
-      //               : Number(element.id) + 1000
-      //           }`,
-      //           `${element.key}`,
-      //         ],
-      //         (err, table) => {
-      //           console.log(err);
-      //         }
-      //       );
-      //     });
-      //   }
-      // );
-      // setTimeout(() => {
-      //   db.all(
-      //     `SELECT lng, lat, bulbId, id FROM ${SetMap.mapName}`,
-      //     (err, table) => {
-      //       table.map(async (element, index, oldArr) => {
-      //         let temp;
-      //         console.log(
-      //           "current element being worked on",
-      //           element.id,
-      //           element
-      //         );
-      //         if (Number(element.id) >= 1000) {
-      //           temp = JSON.parse(JSON.stringify(Number(element.id) - 999));
-      //           console.log("whatis", temp);
-      //         } else {
-      //           temp = element.id;
-      //           console.log("validate");
-      //         }
-      //         console.log("what2", temp, element.id);
-
-      //         await db.run(
-      //           `UPDATE ${SetMap.mapName} SET id = ? WHERE id = ?`,
-      //           [`${temp}`, `${element.id}`],
-      //           (err, table) => {
-      //             console.log(err);
-      //           }
-      //         );
-      //       });
-      //     }
-      //   );
-
-      //   db.run(
-      //     `INSERT INTO ${SetMap.mapName} (id ,lat, lng, key) VALUES (?,?,?,?)`,
-      //     [
-      //       `${SetMap.bulbNumber}`,
-      //       `${SetMap.lat}`,
-      //       `${SetMap.lng}`,
-      //       Math.random(),
-      //     ],
-      //     (err, table) => {
-      //       if (err) {
-      //         reject(err);
-      //         console.log(err);
-      //       }
-      //     }
-      //   );
-      // }, 900);
-
-      // setTimeout(() => {
-      //   db.all(
-      //     `SELECT * FROM ${SetMap.mapName} ORDER BY id + 0 ASC`,
-      //     (err, table) => {
-      //       if (err) {
-      //         reject(err);
-      //       }
-      //       resolve({
-      //         bulbIdList: JSON.stringify(availableBulbIdListFilter(l, table)),
-      //         mapArray: JSON.stringify(table),
-      //         availableBulbIdList: availableBulbIdListFilter(l, table),
-      //       });
-      //     }
-      //   );
-      // }, 1500);
     };
 
     const hottest = async () => {
@@ -329,27 +169,6 @@ export const lampActions = async ({ SetMap }: any) => {
         .run(`${"1"}`, `${SetMap.bulbNumber}`);
 
       console.log(result);
-
-      //   const insert = dbThree.prepare(
-      //     "INSERT INTO cats (name, age) VALUES (@name, @age)"
-      //   );
-      //   const insertMany = dbThree.transaction((cats) => {
-      //     for (const cat of cats) insert.run(cat);
-      //   });
-      //   insertMany([
-      //     { name: "Joey", age: 2 },
-      //     { name: "Sally", age: 4 },
-      //     { name: "Junior", age: 1 },
-      //   ]);
-
-      //   const newExpense = dbThree.prepare(
-      //     "INSERT INTO expenses (note, dollars) VALUES (?, ?)"
-      //   );
-
-      //   const adopt = dbThree.transaction((cats) => {
-      //     newExpense.run("adoption fees", 20);
-      //     insertMany(cats); // nested transaction
-      //   });
     };
 
     const brightness = () => {
@@ -357,6 +176,47 @@ export const lampActions = async ({ SetMap }: any) => {
       const result = dbThree
         .prepare(`UPDATE ${SetMap.mapName} SET brightness = ? WHERE id = ?`)
         .run(`${SetMap.brightness}`, `${SetMap.bulbNumber}`);
+
+      const load = dbThree
+        .prepare(`SELECT * FROM ${SetMap.mapName} ORDER BY id + 0 ASC`)
+        .all();
+      resolve({
+        bulbIdList: JSON.stringify(availableBulbIdListFilter(l, load)),
+        mapArray: JSON.stringify(load),
+        availableBulbIdList: availableBulbIdListFilter(l, load),
+      });
+    };
+
+    const addColor = () => {
+      let colorArr = [];
+      const initialLoad = dbThree
+        .prepare(`SELECT * FROM ${SetMap.mapName} ORDER BY id + 0 ASC`)
+        .all();
+      let lamp = initialLoad.find((lamp) => lamp.id === SetMap.bulbNumber);
+      let colors = JSON.stringify(lamp.colors);
+      console.log("boter");
+      if (!colors.includes(SetMap.extended)) {
+        if (colors === "null") {
+          colorArr.push(SetMap.extended);
+          console.log(colorArr, SetMap.bulbNumber);
+          console.log("if null");
+        } else {
+          let colors = JSON.parse(lamp.colors);
+
+          console.log(colors, typeof colors);
+          console.log("color is not selected");
+          colors.push(SetMap.extended);
+          colorArr = colors;
+        }
+      } else {
+        console.log("color is allready selected ");
+        let colors = JSON.parse(lamp.colors);
+        colorArr = colors.filter((e) => e !== SetMap.extended);
+      }
+      console.log(colorArr);
+      const result = dbThree
+        .prepare(`UPDATE ${SetMap.mapName} SET colors = ? WHERE id = ?`)
+        .run(`${JSON.stringify(colorArr)}`, `${SetMap.bulbNumber}`);
 
       const load = dbThree
         .prepare(`SELECT * FROM ${SetMap.mapName} ORDER BY id + 0 ASC`)
@@ -378,6 +238,8 @@ export const lampActions = async ({ SetMap }: any) => {
       resolve(addLampBeforeActive());
     } else if (SetMap.request === "brightness") {
       resolve(brightness());
+    } else if (SetMap.request === "addColor") {
+      resolve(addColor());
     }
   });
 };

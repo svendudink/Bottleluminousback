@@ -28,7 +28,8 @@ const MapLamps = function ({ SetMap }) {
             SetMap.request === "Hottest" ||
             SetMap.request === "brightness" ||
             SetMap.request === "resetServer" ||
-            SetMap.request === "close") {
+            SetMap.request === "close" ||
+            SetMap.request === "addColor") {
             resolve((0, mapEffects_1.lampActions)({ SetMap }));
         }
         else if (SetMap.request === "directEvent") {
@@ -36,7 +37,7 @@ const MapLamps = function ({ SetMap }) {
         }
         else if (SetMap.request === "newMap") {
             const result = index_1.dbThree
-                .prepare(`CREATE TABLE ${SetMap.mapName} (id text UNIQUE, lat text,lng text, bulbId text UNIQUE, key text UNIQUE, brightness text)`)
+                .prepare(`CREATE TABLE ${SetMap.mapName} (id text UNIQUE, lat text,lng text, bulbId text UNIQUE, key text UNIQUE, brightness text, colors text)`)
                 .run();
             resolve({
                 eventList: JSON.stringify(result),
@@ -66,8 +67,8 @@ const MapLamps = function ({ SetMap }) {
         }
         else if (SetMap.request === "addLamp") {
             const result = index_1.dbThree
-                .prepare(`INSERT INTO ${SetMap.mapName} (id ,lat, lng, key, brightness) VALUES (?,?,?,?,?)`)
-                .run(`${SetMap.bulbNumber}`, `${SetMap.lat}`, `${SetMap.lng}`, Math.random(), `${SetMap.brightness}`);
+                .prepare(`INSERT INTO ${SetMap.mapName} (id ,lat, lng, key, brightness, colors) VALUES (?,?,?,?,?,?)`)
+                .run(`${SetMap.bulbNumber}`, `${SetMap.lat}`, `${SetMap.lng}`, Math.random(), `${SetMap.brightness}`, "[]");
             resolve({
                 bulbIdList: JSON.stringify(SendHandler_3.l),
                 eventList: JSON.stringify(result),
@@ -127,6 +128,7 @@ const ControlDevice = function ({ SetValues }) {
                             bulbArray.push({
                                 bulbId: SendHandler_3.l[element.bulbId],
                                 brightness: element.brightness,
+                                colors: element.colors,
                             });
                         }
                     });
