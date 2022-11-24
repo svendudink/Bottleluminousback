@@ -3,11 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.playVideo = void 0;
+exports.playLength = exports.playVideo = void 0;
 const opencv4nodejs_1 = __importDefault(require("@u4/opencv4nodejs"));
 const __1 = require("..");
 let intervalID;
 let playLength;
+exports.playLength = playLength;
 const playVideo = (command) => {
     let playLength = command;
     const FPS = 7;

@@ -34,4 +34,4 @@ const playVideo = (command: any) => {
   }
 };
 
-export { playVideo };
+export { playVideo, playLength };

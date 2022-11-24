@@ -5,6 +5,7 @@ import {
   directControl,
   directBrightnessControl,
   resetServer,
+  resetValues,
 } from "../ADB/SendHandler";
 
 export const preAlpha = ({ SetMap }) => {
@@ -18,4 +19,5 @@ export const preAlpha = ({ SetMap }) => {
   if (SetMap.extended === "disableDirectControl") directControl("disable");
   if (SetMap.extended === "brightness")
     directBrightnessControl(SetMap.brightness);
+  if (SetMap.extended === "close") resetValues();
 };

@@ -20,7 +20,8 @@ const MapLamps = function ({ SetMap }: any) {
       SetMap.request === "addLampBeforeActive" ||
       SetMap.request === "Hottest" ||
       SetMap.request === "brightness" ||
-      SetMap.request === "resetServer"
+      SetMap.request === "resetServer" ||
+      SetMap.request === "close"
     ) {
       resolve(lampActions({ SetMap }));
     } else if (SetMap.request === "directEvent") {

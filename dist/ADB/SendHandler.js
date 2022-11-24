@@ -12,24 +12,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.resetServer = exports.directBrightnessControl = exports.directControl = exports.startEvent = exports.changeColor = exports.l = exports.RebootToDownload = exports.createFile = void 0;
+exports.resetValues = exports.resetServer = exports.directBrightnessControl = exports.directControl = exports.startEvent = exports.changeColor = exports.l = exports.RebootToDownload = exports.createFile = void 0;
 const fs_1 = __importDefault(require("fs"));
 const __1 = require("..");
 const IO_1 = require("../Helper/IO");
 const { exec } = require("child_process");
 let currentPage = "frontPage";
-let date = new Date();
-let dateAndTime = date.getDate() +
-    "/" +
-    (date.getMonth() + 1) +
-    "/" +
-    date.getFullYear() +
-    "   " +
-    date.getHours() +
-    ":" +
-    date.getMinutes() +
-    ":" +
-    date.getSeconds();
 const updatedDateAndTime = () => {
     let date = new Date();
     let dateAndTime = date.getDate() +
@@ -516,6 +504,14 @@ const directBrightnessControl = (event) => {
     console.log("event", event);
 };
 exports.directBrightnessControl = directBrightnessControl;
+/////////////////////////////////////Sven's//Coding/ Date: 24-11-2022 13:24 ////////////
+// Reset values for new round
+/////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
+const resetValues = () => {
+    (0, IO_1.playVideo)("kill");
+    console.log("videokiller");
+};
+exports.resetValues = resetValues;
 /////////////////////////////////////Sven's//Coding/ Date: 19-10-2022 17:46 ////////////
 // makes a screendump and checks color of selected pixel by looking into the hexdump
 // on location of the pixel

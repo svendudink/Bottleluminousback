@@ -7,20 +7,6 @@ const { exec } = require("child_process");
 
 let currentPage = "frontPage";
 
-let date = new Date();
-let dateAndTime =
-  date.getDate() +
-  "/" +
-  (date.getMonth() + 1) +
-  "/" +
-  date.getFullYear() +
-  "   " +
-  date.getHours() +
-  ":" +
-  date.getMinutes() +
-  ":" +
-  date.getSeconds();
-
 const updatedDateAndTime = () => {
   let date = new Date();
   let dateAndTime =
@@ -647,6 +633,14 @@ const directBrightnessControl = (event) => {
 
   console.log("event", event);
 };
+/////////////////////////////////////Sven's//Coding/ Date: 24-11-2022 13:24 ////////////
+// Reset values for new round
+/////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
+
+const resetValues = () => {
+  playVideo("kill");
+  console.log("videokiller");
+};
 
 /////////////////////////////////////Sven's//Coding/ Date: 19-10-2022 17:46 ////////////
 // makes a screendump and checks color of selected pixel by looking into the hexdump
@@ -922,4 +916,5 @@ export {
   directControl,
   directBrightnessControl,
   resetServer,
+  resetValues,
 };

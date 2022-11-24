@@ -19,5 +19,7 @@ const preAlpha = ({ SetMap }) => {
         (0, SendHandler_1.directControl)("disable");
     if (SetMap.extended === "brightness")
         (0, SendHandler_1.directBrightnessControl)(SetMap.brightness);
+    if (SetMap.extended === "close")
+        (0, SendHandler_1.resetValues)();
 };
 exports.preAlpha = preAlpha;
