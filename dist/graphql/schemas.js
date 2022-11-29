@@ -3,6 +3,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const graphql_1 = require("graphql");
 exports.default = (0, graphql_1.buildSchema)(`
 
+
+
+type User {
+    _id: ID
+    emailAdress: String!
+    password: String
+    aboutCompany: String
+    companyName: String
+    phoneNumber: String
+    yourName: String
+}
+
+type AuthData {
+    token: String!
+    userId: String!
+}
+
+input UserInputData {
+    emailAdress: String!
+    password: String!
+    aboutCompany: String
+    companyName: String
+    phoneNumber: String
+    yourName: String
+}
+
 type ReturnData {
     notDefined: String
     mapArray: String
@@ -38,10 +64,12 @@ input SetMapData {
 type RootMutation {
     ControlDevice(SetValues: SetValuesData): ReturnData
     MapLamps(SetMap: SetMapData): ReturnData
+    createUser(userInput: UserInputData): User!
 }
 
 type rootQuery {
     viewDevices(which: String): ReturnData
+    login(emailAdress: String!, password:String!): AuthData!
 }
 
 

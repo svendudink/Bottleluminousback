@@ -16,6 +16,7 @@ exports.resetValues = exports.resetServer = exports.directBrightnessControl = ex
 const fs_1 = __importDefault(require("fs"));
 const __1 = require("..");
 const IO_1 = require("../Helper/IO");
+const axios_1 = __importDefault(require("axios"));
 const { exec } = require("child_process");
 let currentPage = "frontPage";
 const updatedDateAndTime = () => {
@@ -315,7 +316,7 @@ function createFile(bulbMovement, colourOptionValue, customLampArray) {
 }
 exports.createFile = createFile;
 /////////////////////////////////////Sven's//Coding/ Date: 20-11-2022 20:48 ////////////
-// Check if device is busy with autoreset
+// set the status of the device first parameter is status "free" or "busy"
 /////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
 let resetTime = 0;
 let scriptState = "free";
@@ -408,11 +409,11 @@ const directControl = (event) => __awaiter(void 0, void 0, void 0, function* () 
             __1.io.emit("serverStatus", `${updatedDateAndTime()}  turning on display`);
             yield turnOnDisplay();
             __1.io.emit("serverStatus", `${updatedDateAndTime()}  setting ADB in root mode`);
-            yield root();
-            __1.io.emit("serverStatus", `${updatedDateAndTime()}  kill OSRAM App`);
-            yield killApp();
-            __1.io.emit("serverStatus", `${updatedDateAndTime()}  restarting app`);
-            yield restartApp();
+            // await root();
+            // io.emit("serverStatus", `${updatedDateAndTime()}  kill OSRAM App`);
+            // await killApp();
+            // io.emit("serverStatus", `${updatedDateAndTime()}  restarting app`);
+            // await restartApp();
             yield checkAndWait(649, 126, 66, "connected", 255, "trying to connect", 211, "trying to connect", 30);
             yield sendTouchEvent(930, 850, 0);
             yield checkAndWait(1080, 1200, 255, "colorwheel loaded", 255, "trying to connect", 255, "trying to connect", 20);
@@ -432,7 +433,7 @@ const directControl = (event) => __awaiter(void 0, void 0, void 0, function* () 
 exports.directControl = directControl;
 /////////////////////////////////////Sven's//Coding/ Date: 02-11-2022 18:47 ////////////
 // check and wait for pixel change, if first color is reached, function ends,
-// (X,Y,color 1, io message 1, color 2, io message 2, color 3,io message 3)
+// (X,Y,color 1, io message 1, color 2, io message 2, color 3,io message 3, amount of timeouts)
 // watching for device to connect to android by checking the pixel changing to green
 // when a connection is established
 // and wghen 30 trials have been made perform a device reset, and do another round of 30
@@ -470,7 +471,8 @@ const checkAndWait = (x, y, color1, message1, color2, message2, color3, message3
         }
         if (message1 === "connected" &&
             i === maxTimeOuts - 1 &&
-            rebootcycles === 0) {
+            // will run infinitely to make connection (trial) any number above 1 will run infinit
+            rebootcycles <= 5) {
             rebootcycles = 1;
             i = 0;
             console.log("reboot");
@@ -622,7 +624,8 @@ const checkIfConnected = () => __awaiter(void 0, void 0, void 0, function* () {
 /////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
 const RebootToDownload = () => __awaiter(void 0, void 0, void 0, function* () {
     if (scriptState === "free") {
-        setDeviceStatus("busy", 300);
+        (0, IO_1.playVideo)("kill");
+        setDeviceStatus("busy", 10);
         currentPage = "mappedEvent";
         __1.io.emit("turning on display");
         yield turnOnDisplay();
@@ -636,14 +639,16 @@ const RebootToDownload = () => __awaiter(void 0, void 0, void 0, function* () {
         yield writeFileToAndroid();
         __1.io.emit("serverStatus", `${updatedDateAndTime()}  restarting app`);
         yield restartApp();
+        powerSwitch(false);
         __1.io.emit("serverStatus", `${updatedDateAndTime()}  awaiting connection with lights`);
         yield checkAndWait(649, 126, 66, "connected", 255, "trying to connect", 211, "trying to connect", 60);
+        powerSwitch(true);
         __1.io.emit("serverStatus", `${updatedDateAndTime()}  starting live video stream`);
-        (0, IO_1.playVideo)(240);
         __1.io.emit("serverStatus", `${updatedDateAndTime()}  loading light file`);
         yield checkAndWait(300, 300, 158, "file loaded");
         yield sendTouchEvent(300, 300, 0);
         __1.io.emit("serverStatus", `${updatedDateAndTime()}  light event started`);
+        (0, IO_1.playVideo)(300);
         setDeviceStatus("free", "none");
     }
     else {
@@ -707,13 +712,7 @@ const restartApp = () => {
 /////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
 const resetServer = () => __awaiter(void 0, void 0, void 0, function* () {
     setTimeout(function () {
-        // Listen for the 'exit' event.
-        // This is emitted when our app exits.
         process.on("exit", function () {
-            //  Resolve the `child_process` module, and `spawn`
-            //  a new process.
-            //  The `child_process` module lets us
-            //  access OS functionalities by running any bash command.`.
             require("child_process").spawn(process.argv.shift(), process.argv, {
                 cwd: process.cwd(),
                 detached: true,
@@ -724,3 +723,21 @@ const resetServer = () => __awaiter(void 0, void 0, void 0, function* () {
     }, 1000);
 });
 exports.resetServer = resetServer;
+/////////////////////////////////////Sven's//Coding/ Date: 29-11-2022 08:49 ////////////
+// Physical power socket, as the lamps often have problems with connecting, this is a little bridge to help them, it
+//disables 10 out of 11 lamps, when a connection is established, the mesh network heals in seconds
+/////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
+const powerSwitch = (onOff) => {
+    const data = {
+        on: onOff,
+    };
+    axios_1.default
+        .put("http://192.168.2.105:80/api/0C20FFC055/lights/1/state", data)
+        .then((res) => {
+        console.log(`Status: ${res.status}`);
+        console.log("Body: ", res.data);
+    })
+        .catch((err) => {
+        console.error(err);
+    });
+};

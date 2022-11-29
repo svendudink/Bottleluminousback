@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -12,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.server = exports.io = exports.dbThree = exports.dbTwo = exports.db = void 0;
+exports.transporter = exports.server = exports.io = exports.dbThree = exports.dbTwo = exports.db = void 0;
 const express_1 = __importDefault(require("express"));
 const fs_1 = __importDefault(require("fs"));
 const express_graphql_1 = require("express-graphql");
@@ -23,9 +46,56 @@ const resolvers_1 = require("./graphql/resolvers");
 const sqlite3 = require("sqlite3").verbose();
 const sqlite_1 = require("sqlite");
 const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
+const dotenv = __importStar(require("dotenv"));
+const mongoose_1 = __importDefault(require("mongoose"));
+const nodemailer_1 = __importDefault(require("nodemailer"));
 const https = require("https");
 const http = require("http");
 const app = (0, express_1.default)();
+dotenv.config();
+let originsAdress = "https://bottleluminousfront.herokuapp.com";
+let allowedOrigins = [
+    "https://bottleluminousfront.herokuapp.com",
+    "http://localhost:3000",
+];
+/////////////////////////////////////Sven's//Coding/ Date: 22-11-2022 13:23 ////////////
+// login to mongoose
+/////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
+console.log(process.env.MONGO_URI);
+const mongooseLogin = process.env.MONGO_URI;
+const DataBaseConnect = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield mongoose_1.default.connect(mongooseLogin);
+        console.log("Connection established with mongo");
+    }
+    catch (error) {
+        console.log("DB error", error);
+    }
+});
+const transport = {
+    //this is the authentication for sending email.
+    host: "smtp.zoho.eu",
+    port: 465,
+    secure: true,
+    //create a .env file and define the process.env variables
+    auth: {
+        user: process.env.SMTP_TO_EMAIL,
+        pass: process.env.SMTP_TO_PASSWORD,
+    },
+};
+const transporter = nodemailer_1.default.createTransport(transport);
+exports.transporter = transporter;
+transporter.verify((error, success) => {
+    if (error) {
+        //if error happened code ends here
+        console.error(error);
+    }
+    else {
+        //this means success
+        console.log("Ready to send mail!");
+    }
+});
+DataBaseConnect();
 const options = {
     key: fs_1.default.readFileSync("C:/Certbot/live/bottle.hopto.org/privkey.pem"),
     cert: fs_1.default.readFileSync("C:/Certbot/live/bottle.hopto.org/cert.pem"),
@@ -38,10 +108,18 @@ exports.server = server;
 const { Server } = require("socket.io");
 const io = new Server(server, {
     cors: {
-        origin: "https://bottleluminousfront.herokuapp.com",
+        origin: function (origin, callback) {
+            if (origin) {
+                callback(null, true);
+            }
+            else {
+                callback(new Error("Not allowed by CORS"));
+            }
+        },
     },
 });
 exports.io = io;
+//  "https://bottleluminousfront.herokuapp.com"
 const errorHandler = (handler) => {
     const handleError = (err) => {
         console.error("please handle me", err);
@@ -86,9 +164,26 @@ exports.dbTwo = dbTwo;
         driver: sqlite3.Database,
     });
 }))();
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     if (allowedOrigins.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true,
+// };
 // Cors
 const corsOptions = {
-    origin: "https://bottleluminousfront.herokuapp.com",
+    origin: function (origin, callback) {
+        if (origin) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
     credentials: true,
 };
 app.use((0, cors_1.default)(corsOptions));
@@ -118,12 +213,11 @@ app.get("/", (req, res) => {
 let socketIdArray = [];
 io.on("connect", (socket) => {
     console.log("a user connected");
-    console.log(socket.id);
     socketIdArray.push(socket.id);
-    console.log(socketIdArray[socketIdArray.length - 2] != null);
+    console.log("the socket array", socketIdArray.length != null ? socketIdArray : "empty");
 });
-io.on("connect", (test) => {
-    console.log("test");
+io.on("disconnect", (test) => {
+    console.log(test);
 });
 server.listen(8081, () => {
     console.log("listening on *:8081");

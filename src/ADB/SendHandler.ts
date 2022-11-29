@@ -2,6 +2,7 @@ import express from "express";
 import fs from "fs";
 import { io } from "..";
 import { playVideo } from "../Helper/IO";
+import axios from "axios";
 
 const { exec } = require("child_process");
 
@@ -354,7 +355,7 @@ export function createFile(
 }
 
 /////////////////////////////////////Sven's//Coding/ Date: 20-11-2022 20:48 ////////////
-// Check if device is busy with autoreset
+// set the status of the device first parameter is status "free" or "busy"
 /////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
 let resetTime = 0;
 let scriptState = "free";
@@ -481,11 +482,11 @@ const directControl = async (event) => {
         "serverStatus",
         `${updatedDateAndTime()}  setting ADB in root mode`
       );
-      await root();
-      io.emit("serverStatus", `${updatedDateAndTime()}  kill OSRAM App`);
-      await killApp();
-      io.emit("serverStatus", `${updatedDateAndTime()}  restarting app`);
-      await restartApp();
+      // await root();
+      // io.emit("serverStatus", `${updatedDateAndTime()}  kill OSRAM App`);
+      // await killApp();
+      // io.emit("serverStatus", `${updatedDateAndTime()}  restarting app`);
+      // await restartApp();
 
       await checkAndWait(
         649,
@@ -534,7 +535,7 @@ const directControl = async (event) => {
 
 /////////////////////////////////////Sven's//Coding/ Date: 02-11-2022 18:47 ////////////
 // check and wait for pixel change, if first color is reached, function ends,
-// (X,Y,color 1, io message 1, color 2, io message 2, color 3,io message 3)
+// (X,Y,color 1, io message 1, color 2, io message 2, color 3,io message 3, amount of timeouts)
 
 // watching for device to connect to android by checking the pixel changing to green
 // when a connection is established
@@ -586,7 +587,8 @@ const checkAndWait = async (
     if (
       message1 === "connected" &&
       i === maxTimeOuts - 1 &&
-      rebootcycles === 0
+      // will run infinitely to make connection (trial) any number above 1 will run infinit
+      rebootcycles <= 5
     ) {
       rebootcycles = 1;
       i = 0;
@@ -789,7 +791,8 @@ const checkIfConnected = async () => {
 
 export const RebootToDownload = async () => {
   if (scriptState === "free") {
-    setDeviceStatus("busy", 300);
+    playVideo("kill");
+    setDeviceStatus("busy", 10);
     currentPage = "mappedEvent";
     io.emit("turning on display");
     await turnOnDisplay();
@@ -806,6 +809,7 @@ export const RebootToDownload = async () => {
     await writeFileToAndroid();
     io.emit("serverStatus", `${updatedDateAndTime()}  restarting app`);
     await restartApp();
+    powerSwitch(false);
 
     io.emit(
       "serverStatus",
@@ -823,16 +827,18 @@ export const RebootToDownload = async () => {
       "trying to connect",
       60
     );
+    powerSwitch(true);
     io.emit(
       "serverStatus",
       `${updatedDateAndTime()}  starting live video stream`
     );
-    playVideo(240);
+
     io.emit("serverStatus", `${updatedDateAndTime()}  loading light file`);
 
     await checkAndWait(300, 300, 158, "file loaded");
     await sendTouchEvent(300, 300, 0);
     io.emit("serverStatus", `${updatedDateAndTime()}  light event started`);
+    playVideo(300);
     setDeviceStatus("free", "none");
   } else {
     io.emit("serverStatus", `${updatedDateAndTime()}  a script is running`);
@@ -924,13 +930,7 @@ const restartApp = () => {
 
 const resetServer = async () => {
   setTimeout(function () {
-    // Listen for the 'exit' event.
-    // This is emitted when our app exits.
     process.on("exit", function () {
-      //  Resolve the `child_process` module, and `spawn`
-      //  a new process.
-      //  The `child_process` module lets us
-      //  access OS functionalities by running any bash command.`.
       require("child_process").spawn(process.argv.shift(), process.argv, {
         cwd: process.cwd(),
         detached: true,
@@ -939,6 +939,27 @@ const resetServer = async () => {
     });
     process.exit();
   }, 1000);
+};
+
+/////////////////////////////////////Sven's//Coding/ Date: 29-11-2022 08:49 ////////////
+// Physical power socket, as the lamps often have problems with connecting, this is a little bridge to help them, it
+//disables 10 out of 11 lamps, when a connection is established, the mesh network heals in seconds
+/////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
+
+const powerSwitch = (onOff) => {
+  const data = {
+    on: onOff,
+  };
+
+  axios
+    .put("http://192.168.2.105:80/api/0C20FFC055/lights/1/state", data)
+    .then((res) => {
+      console.log(`Status: ${res.status}`);
+      console.log("Body: ", res.data);
+    })
+    .catch((err) => {
+      console.error(err);
+    });
 };
 
 /////////////////////////////////////Sven's//Coding/ Date: 03-11-2022 15:58 ////////////

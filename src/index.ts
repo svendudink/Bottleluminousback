@@ -8,9 +8,61 @@ import { graphqlResolver } from "./graphql/resolvers";
 const sqlite3 = require("sqlite3").verbose();
 import { open } from "sqlite";
 import Database from "better-sqlite3";
+import * as dotenv from "dotenv";
+import mongoose from "mongoose";
+import nodemailer from "nodemailer";
 const https = require("https");
 const http = require("http");
 const app = express();
+
+dotenv.config();
+
+let originsAdress = "https://bottleluminousfront.herokuapp.com";
+let allowedOrigins = [
+  "https://bottleluminousfront.herokuapp.com",
+  "http://localhost:3000",
+];
+
+/////////////////////////////////////Sven's//Coding/ Date: 22-11-2022 13:23 ////////////
+// login to mongoose
+/////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
+console.log(process.env.MONGO_URI);
+const mongooseLogin = process.env.MONGO_URI;
+
+const DataBaseConnect = async () => {
+  try {
+    await mongoose.connect(mongooseLogin);
+    console.log("Connection established with mongo");
+  } catch (error) {
+    console.log("DB error", error);
+  }
+};
+
+const transport = {
+  //this is the authentication for sending email.
+  host: "smtp.zoho.eu",
+  port: 465,
+  secure: true, // use TLS
+  //create a .env file and define the process.env variables
+
+  auth: {
+    user: process.env.SMTP_TO_EMAIL,
+    pass: process.env.SMTP_TO_PASSWORD,
+  },
+};
+
+const transporter = nodemailer.createTransport(transport);
+transporter.verify((error, success) => {
+  if (error) {
+    //if error happened code ends here
+    console.error(error);
+  } else {
+    //this means success
+    console.log("Ready to send mail!");
+  }
+});
+
+DataBaseConnect();
 
 const options = {
   key: fs.readFileSync("C:/Certbot/live/bottle.hopto.org/privkey.pem"),
@@ -26,9 +78,17 @@ const { Server } = require("socket.io");
 
 const io = new Server(server, {
   cors: {
-    origin: "https://bottleluminousfront.herokuapp.com",
+    origin: function (origin, callback) {
+      if (origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
   },
 });
+
+//  "https://bottleluminousfront.herokuapp.com"
 
 const errorHandler = (handler) => {
   const handleError = (err) => {
@@ -77,9 +137,26 @@ let dbTwo;
   });
 })();
 
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     if (allowedOrigins.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error("Not allowed by CORS"));
+//     }
+//   },
+//   credentials: true,
+// };
+
 // Cors
 const corsOptions = {
-  origin: "https://bottleluminousfront.herokuapp.com",
+  origin: function (origin, callback) {
+    if (origin) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 };
 app.use(cors(corsOptions));
@@ -117,13 +194,16 @@ let socketIdArray = [];
 
 io.on("connect", (socket) => {
   console.log("a user connected");
-  console.log(socket.id);
+
   socketIdArray.push(socket.id);
-  console.log(socketIdArray[socketIdArray.length - 2] != null);
+  console.log(
+    "the socket array",
+    socketIdArray.length != null ? socketIdArray : "empty"
+  );
 });
 
-io.on("connect", (test) => {
-  console.log("test");
+io.on("disconnect", (test) => {
+  console.log(test);
 });
 
 server.listen(8081, () => {
@@ -155,4 +235,4 @@ app.use(
 // Livestream video
 /////////////////////////////////////////gnidoC//s'nevS////////////////////////////////
 
-export { db, dbTwo, dbThree, io, server };
+export { db, dbTwo, dbThree, io, server, transporter };
